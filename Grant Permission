@@ -1,0 +1,2 @@
+--show plan permission to user
+GRANT Showplan TO [DominName\username]”
