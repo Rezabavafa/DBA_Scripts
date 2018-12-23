@@ -1,0 +1,25 @@
+USE [Baran]
+GO
+
+/****** Object:  StoredProcedure [dbo].[SP_PrintMessageWithTime]    Script Date: 12/23/2018 2:04:42 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Saeed Aliakbarian
+-- Create date: 97/09/17
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_PrintMessageWithTime]
+	@Message NVARCHAR(MAX)
+AS
+BEGIN
+	SET NOCOUNT ON;
+	SET @Message=FORMAT(GETDATE(),'(yyyy-MM-dd h:mm:ss.ff) ')+@Message
+	RAISERROR (@Message, 0, 1) WITH NOWAIT
+END
+GO
+
+
