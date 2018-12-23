@@ -1,0 +1,197 @@
+USE [RawDB]
+GO
+
+/****** Object:  UserDefinedFunction [dbo].[Fn_SplitPhoneNumber]    Script Date: 12/23/2018 2:40:42 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		<Reza Bavafa>
+-- Create date: <96/07/24>
+-- Description:	<splitting Phones Number>
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_SplitPhoneNumber]
+(
+	
+	@StrPhoneNumber as nvarchar(100)
+)
+RETURNS 
+@TblPhoneNumbers TABLE 
+(
+	-- Add the column definitions for the TABLE variable here
+	CountryCode int,
+	AreaCode int,
+	DestinationCode bigint
+)
+AS
+	BEGIN
+
+
+declare @CountryCode as int
+declare @AreaCode as int
+declare @DestinationNumber as int
+
+--set @StrPhoneNumber='912-2249594'
+
+--Remove All Charachters
+set @StrPhoneNumber=[dbo].[Fn_CharacterRemove](@StrPhoneNumber)
+--print @StrPhoneNumber
+--------Find Country Code------------------------------------------------------------
+if  left(@StrPhoneNumber,2)='00'
+begin
+set @CountryCode=SUBSTRING(@StrPhoneNumber,3,2)
+--print @CountryCode
+
+set @StrPhoneNumber=SUBSTRING(@StrPhoneNumber,5,len(@StrPhoneNumber)-2)
+--print @StrPhoneNumber
+end
+-------------------------------------------------------------------------------------
+if  left(@StrPhoneNumber,2)='98' or left(@StrPhoneNumber,3)='098'
+begin
+set @CountryCode=SUBSTRING(@StrPhoneNumber,1,2)
+--print @CountryCode
+
+set @StrPhoneNumber=SUBSTRING(@StrPhoneNumber,3,len(@StrPhoneNumber)-2)
+--print @StrPhoneNumber
+end
+------------------find Area Code --> Provinces Of Iran--------------------------------------------------
+l1:
+if LEFT(@StrPhoneNumber,3)in(
+
+                                 '041','044','045','031',
+                                 '026','084','077','021',
+                                 '038','056','051','058', 
+                                 '061','024','023','054', 
+                                 '071','028','025','087', 
+                                 '034','083','074','017', 
+                                 '013','066','011','086', 
+                                 '076','081','035' 
+                            )
+begin
+
+set @AreaCode=LEFT(@StrPhoneNumber,3)
+set @StrPhoneNumber=SUBSTRING(@StrPhoneNumber,4,len(@StrPhoneNumber)-3)
+--print @AreaCode
+--print @StrPhoneNumber
+end 							
+--------------------Find Area Code --> Mobile Number-------------------------------------------------------------------------------------------							 
+if (
+									LEFT(@StrPhoneNumber,3)='091' or  
+							        LEFT(@StrPhoneNumber,4) in('0990','0931','0932','0901','0902','0903','0930','0933','0935','0936','0937','0938','0939','0920','0921','0922')OR
+									LEFT(@StrPhoneNumber,5)in('09991','09990','09981') or
+									LEFT(@StrPhoneNumber,6)in('099999','099998') 
+	)
+begin
+
+set @AreaCode=LEFT(@StrPhoneNumber,4)
+SET @StrPhoneNumber=SUBSTRING(@StrPhoneNumber,5,LEN(@StrPhoneNumber)-4)
+--print @AreaCode
+--PRINT @StrPhoneNumber
+end							                                
+								
+-------------Find Destination Code---------------------------------------------------------------------------------------------
+if LEN(@StrPhoneNumber)= 7 or LEN(@StrPhoneNumber)= 8
+begin
+
+set @DestinationNumber=@StrPhoneNumber
+--print @DestinationNumber
+end
+-------------------------------------------------------------------------------------------------------------------------------
+if LEN(@StrPhoneNumber)=10 or LEN(@StrPhoneNumber)=9
+begin
+set @StrPhoneNumber='0'+@StrPhoneNumber
+--print @StrPhoneNumber
+goto l1
+end
+----------------------------------------------------------------------------------------
+insert into @TblPhoneNumbers
+							(CountryCode ,	AreaCode ,	DestinationCode )
+					  values(@CountryCode,@AreaCode,@DestinationNumber)
+
+
+
+
+
+
+------------------------------------------------------------------------
+
+
+--tehran
+--021-54609000
+--+98-912-22845859
+
+--Azbayejan sharghi
+--041-3xxx-xxxx
+--+98-41-3xxx-xxxx
+
+--061-xxxx-xxxx
+--+98-61-xxxx-xxxx
+
+--031-77414832
+--+98-913-22845859
+
+--026-xxxx-xxxx
+--314-26-xxxx-xxxx
+
+--025-xxxx-xxxx
+--+98-25-xxxx-xxxx
+
+--035-xxxx-xxxx
+--+98-35-xxxx-xxxx
+--Format all Phone
+------------------------0yy-xxx-xxxx
+---------------------+98-yy-xxx-xxxx
+
+--MCI
+--091x-xxx-xxxx
+--0990-xxx-xxxx
+
+--MTCE
+--0931-xxx-xxxx
+
+--Taliya
+--0932-xxx-xxxx
+
+
+--MTN Irancell
+--0901-xxx-xxxx
+--0902-xxx-xxxx
+--0903-xxx-xxxx
+--0930 136 4307
+--0933-xxx-xxxx
+--0935-xxx-xxxx
+--0936-xxx-xxxx
+--0937-xxx-xxxx
+--0938-xxx-xxxx
+--0939-xxx-xxxx
+
+--RighTel
+--0920-xxx-xxxx
+--0921-xxx-xxxx
+--0922-xxx-xxxx
+
+
+--SAMAN tel
+--0999 99x-xxxx
+--0999 98x-xxxx
+
+--UpTell
+--0999 1xx-xxxx
+
+
+--PH.Lotus
+--0999 0xx-xxxx
+
+--Shatel mobile
+--0998 1xx-xxxx
+	
+
+	
+	RETURN 
+END
+GO
+
+
