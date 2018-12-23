@@ -1,0 +1,37 @@
+USE [RawDB]
+GO
+
+/****** Object:  UserDefinedFunction [dbo].[Fn_DateStringToDate_Gregorian_Fast]    Script Date: 12/23/2018 2:37:30 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+-- =============================================
+-- Author:		<Saeed Aliakbarian>
+-- Create date: <97.07.30>
+-- Description:	<Convert Gregorian Date String(YY or YYYY) To TSQL Date>
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_DateStringToDate_Gregorian_Fast]
+(
+	@StrDate AS nvarchar(20),
+	@FutureYears INT
+)
+RETURNS TABLE
+AS RETURN
+(
+	SELECT ISNULL((SELECT DateValue	FROM  dbo.Fn_DateStringToDate_Gregorian_YYYY_Fast(@StrDate)),
+					(SELECT DateValue	FROM  dbo.Fn_DateStringToDate_Gregorian_YY_Fast(@StrDate,@FutureYears))
+				) DateValue
+)
+
+
+
+
+
+GO
+
+
