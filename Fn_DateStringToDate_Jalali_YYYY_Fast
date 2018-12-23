@@ -1,0 +1,37 @@
+USE [RawDB]
+GO
+
+/****** Object:  UserDefinedFunction [dbo].[Fn_DateStringToDate_Jalali_YYYY_Fast]    Script Date: 12/23/2018 2:39:47 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+-- =============================================
+-- Author:		<Saeed Aliakbarian>
+-- Create date: <97.07.30>
+-- Description:	<Convert Jalali Date String(YYYY) To TSQL Date>
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_DateStringToDate_Jalali_YYYY_Fast]
+(
+	@StrDate AS nvarchar(20)
+)
+RETURNS TABLE
+AS RETURN
+(
+	SELECT D.DateValue
+	FROM [GNR].[CACHE_Dates_MultipleFormats] D
+	WHERE D.Jalali=@StrDate
+		AND D.DateFormat IN ('yyyyMMdd','yyyy-MM-dd','yyyy/MM/dd')
+)
+
+
+
+
+
+GO
+
+
