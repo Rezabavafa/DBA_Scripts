@@ -1,0 +1,24 @@
+USE [Baran]
+GO
+
+/****** Object:  StoredProcedure [dbo].[SP_PrintMessage]    Script Date: 12/23/2018 2:04:08 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Saeed Aliakbarian
+-- Create date: 97/09/17
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_PrintMessage]
+	@Message NVARCHAR(MAX)
+AS
+BEGIN
+	SET NOCOUNT ON;
+	RAISERROR (@Message, 0, 1) WITH NOWAIT
+END
+GO
+
+
