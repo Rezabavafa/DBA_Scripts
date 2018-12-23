@@ -1,0 +1,40 @@
+USE [RawDB]
+GO
+
+/****** Object:  UserDefinedFunction [dbo].[Fn_DateStringToDate_OptionalSeparator_Fast]    Script Date: 12/23/2018 2:40:14 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+-- =============================================
+-- Author:		<Saeed Aliakbarian>
+-- Create date: <97.07.30>
+-- Description:	<Convert Jalali Date String To TSQL Date>
+-- =============================================
+CREATE FUNCTION [dbo].[Fn_DateStringToDate_OptionalSeparator_Fast] 
+(	
+	@StrDate AS nvarchar(20)
+	,@IsGregorian AS bit
+	,@FutureYears AS INT=15
+)
+RETURNS TABLE 
+AS
+RETURN 
+(
+	SELECT 
+		CASE 
+			WHEN @StrDate IS NULL THEN NULL
+			WHEN @IsGregorian=1 THEN 
+					ISNULL((SELECT DateValue	FROM  dbo.Fn_DateStringToDate_Gregorian_Fast(@StrDate,@FutureYears)),
+							[dbo].[Fn_DateStringToDate_OptionalSeparator_Fast_Scalar](@StrDate,@IsGregorian,@FutureYears))
+			ELSE
+					ISNULL((SELECT DateValue	FROM  dbo.Fn_DateStringToDate_Jalali_Fast(@StrDate,@FutureYears)),
+							[dbo].[Fn_DateStringToDate_OptionalSeparator_Fast_Scalar](@StrDate,@IsGregorian,@FutureYears))
+		END AS DateValue
+)
+GO
+
+
