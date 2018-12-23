@@ -1,0 +1,49 @@
+USE [Baran]
+GO
+
+/****** Object:  StoredProcedure [dbo].[SP_TableComparation]    Script Date: 12/23/2018 2:09:50 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		Reza bavafa
+-- Create date: 97.07.07
+-- Description:	Table Comparasion
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_TableComparation]
+	-- Add the parameters for the stored procedure here
+	 @DevTable AS Nvarchar(100)
+	,@ProdTable AS Nvarchar(100)
+AS
+BEGIN
+	SET NOCOUNT ON;
+SET @DevTable='SELECT * FROM '+@DevTable
+SET @ProdTable='SELECT * FROM '+@ProdTable
+
+SELECT 
+	DEV.name as DEV_ColumnName, 
+	PROD.name as PROD_ColumnName, 
+	DEV.is_nullable as DEV_is_nullable, 
+	PROD.is_nullable as PROD_is_nullable, 
+	DEV.system_type_name as DEV_Datatype, 
+	PROD.system_type_name as PROD_Datatype, 
+	DEV.is_identity_column as DEV_is_identity, 
+	PROD.is_identity_column as PROD_is_identity  
+	,CASE WHEN		
+					dev.is_nullable=PROD.is_nullable 
+				and dev.system_type_name=PROD.system_type_name 
+				and dev.is_identity_column=PROD.is_identity_column 
+		THEN 1 
+		ELSE 0 
+		END
+	as IsSame
+FROM sys.dm_exec_describe_first_result_set (@DevTable, NULL, 0) DEV 
+FULL OUTER JOIN  sys.dm_exec_describe_first_result_set (@ProdTable, NULL, 0) PROD 
+ON DEV.name = PROD.name 
+END
+GO
+
+
