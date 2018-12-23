@@ -1,0 +1,32 @@
+USE [RawDB]
+GO
+
+/****** Object:  UserDefinedFunction [dbo].[Fn_DataMap_Match]    Script Date: 12/23/2018 2:36:29 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+CREATE FUNCTION [dbo].[Fn_DataMap_Match] 
+(	
+	@StagingValue nvarchar(200),
+	@DataMapTypeId int
+)
+RETURNS TABLE 
+AS
+RETURN 
+(
+	SELECT CASE 
+			WHEN @StagingValue IS NOT NULL THEN 
+				ISNULL(
+						(SELECT TOP 1 DM.IntegrationId 
+						FROM RawDB.GNR.DataMaps DM
+						WHERE DM.TypeId = @DataMapTypeId
+							AND dbo.Fn_StringExactCompare(DM.StagingValue,@StagingValue)=1)
+					,-2) END AS IntegrationId -- -2 is when StagingValue does Not exists in mapping
+)
+GO
+
+
