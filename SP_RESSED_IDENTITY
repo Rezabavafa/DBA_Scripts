@@ -1,0 +1,43 @@
+USE [Baran]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_RESSED_IDENTITY]    Script Date: 12/23/2018 2:06:39 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		REZA BAVAFA
+-- Create date: 96-11-02
+-- Description:	RESEED TABLE IDENTITY
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_RESSED_IDENTITY]
+	
+	@DatabaseName as nvarchar(100),
+	@TableName as nvarchar(100),
+	@SchemaName as nvarchar(100),
+	@FieldName as nvarchar(100)
+
+AS
+BEGIN
+	SET NOCOUNT ON;
+
+	DECLARE @MaxId as BIGINT
+	DECLARE @MAX bigint
+	DECLARE @ParamMax as nvarchar(200)
+	DECLARE @QUERY AS NVARCHAR(MAX)
+	 
+	SET @ParamMax=N'@MAXID bigint OUTPUT'
+	SET @QUERY=
+		'SELECT @MAXID=ISNULL(MAX(' +@FieldName +'),1)  FROM '+@DatabaseName+'.'+@SchemaName +  '.'+@TableName
+
+	 EXECUTE sp_executesql @QUERY,
+						   @ParamMax,
+							@MAXID=@MAX OUTPUT
+	--PRINT @MAX
+	 
+	SET @QUERY= 
+		' DBCC checkident ('''+@DatabaseName+'.'+@SchemaName+'.'+@TableName+''', reseed,'+ CAST(@MAX AS nvarchar(100))+')'
+	PRINT @QUERY
+		
+	EXECUTE (@QUERY)
+END
