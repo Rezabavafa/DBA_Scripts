@@ -1,0 +1,22 @@
+USE [RawDB]
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_CheckPostalCode_Fast]    Script Date: 12/23/2018 2:35:46 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+ALTER FUNCTION [dbo].[Fn_CheckPostalCode_Fast] 
+(	
+	@PostalCode NVARCHAR(20)
+)
+RETURNS TABLE 
+AS
+RETURN 
+(
+	SELECT ISNULL((SELECT PC.PostalCode
+				FROM  [GNR].[CACHE_PostalCodes] PC
+				WHERE PC.PostalCode=@PostalCode),dbo.CheckPostalCode(@PostalCode)) PostalCode
+)
