@@ -1,0 +1,27 @@
+USE [RawDB]
+GO
+
+/****** Object:  UserDefinedFunction [dbo].[Fn_CheckNationalCode_Fast]    Script Date: 12/23/2018 2:11:21 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+CREATE FUNCTION [dbo].[Fn_CheckNationalCode_Fast] 
+(	
+	@NationalCode NVARCHAR(20)
+)
+RETURNS TABLE 
+AS
+RETURN 
+(
+	SELECT ISNULL((SELECT NC.NationalCode
+				FROM  [GNR].[CACHE_NationalCodes] NC
+				WHERE NC.NationalCode=@NationalCode),dbo.CheckNationalCode(@NationalCode)) NationalCode
+)
+GO
+
+
