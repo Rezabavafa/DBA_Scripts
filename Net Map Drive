@@ -1,0 +1,22 @@
+Use Master
+GO
+
+EXEC master.dbo.sp_configure 'show advanced options', 1
+RECONFIGURE WITH OVERRIDE
+GO
+
+EXEC master.dbo.sp_configure 'xp_cmdshell', 1
+RECONFIGURE WITH OVERRIDE
+GO
+
+exec xp_cmdshell 'net use Y: \\IP\X S0n /USER:son /PERSISTENT:yes'
+go
+Use Master
+GO
+
+EXEC master.dbo.sp_configure 'show advanced options', 1
+RECONFIGURE WITH OVERRIDE
+GO
+
+EXEC master.dbo.sp_configure 'xp_cmdshell', 0
+RECONFIGURE WITH OVERRIDE
