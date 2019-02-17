@@ -1,0 +1,80 @@
+USE [AYN_TR_ODS_Archive]
+GO
+/****** Object:  StoredProcedure [dbo].[Usp_MNG_IndexCompression]    Script Date: 2/17/2019 12:54:40 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<reza bavafa>
+-- Create date: <2019-02-17>
+-- Description:	<Check Compression Index and Rebulit Index That Does Not Compression>
+-- =============================================
+create PROCEDURE [dbo].[Usp_MNG_IndexCompression_With_Partition]
+	
+	@schemaName AS nvarchar(200),
+	@TableName AS nvarchar(200),
+	@PartitionCount AS Int =0,
+	@WillRun AS Bit=0
+AS
+BEGIN
+	SET NOCOUNT ON;
+	DECLARE @QUERY AS NVARCHAR(500)
+	DECLARE @compress table
+	(
+	   id int identity,
+	   enableCommand varchar(max),
+	   indexType tinyint 
+	)
+	IF @PartitionCount=0
+	BEGIN
+		INSERT INTO @compress
+		SELECT DISTINCT 'ALTER INDEX ' + i.name + ' on [' + s.name + '].[' + o.name + '] REBUILD WITH (data_compression = page)',
+			   i.type
+		FROM sys.indexes i 
+		INNER JOIN sys.objects o on i.object_id = o.object_id
+		INNER JOIN sys.schemas s on o.schema_id = s.schema_id 
+		LEFT JOIN sys.partitions P ON P.object_id=o.object_id 
+		WHERE 
+				i.type > 0
+			and o.is_ms_shipped = 0
+			AND P.data_compression_desc='NONE'
+			AND o.name=@TableName
+			AND s.name = @schemaName
+		ORDER BY i.type
+	END
+	ELSE
+	BEGIN
+	INSERT INTO @compress
+	SELECT  'ALTER INDEX ' + i.name + ' on [' + s.name + '].[' + o.name + '] REBUILD PARTITION='+CAST(P.partition_number AS nvarchar(10))+'WITH (data_compression = page)',
+		   i.type
+	FROM sys.indexes i 
+	INNER JOIN sys.objects o on i.object_id = o.object_id
+	INNER JOIN sys.schemas s on o.schema_id = s.schema_id 
+	LEFT JOIN sys.partitions P ON P.object_id=o.object_id 
+	WHERE 
+			i.type > 0
+		and o.is_ms_shipped = 0
+		AND P.data_compression_desc='NONE'
+		AND o.name=@TableName
+		AND s.name = @schemaName
+	ORDER BY i.type
+	END
+	
+
+	DECLARE @counter int = 1, @sql varchar(max)
+	DECLARE @MaxCounter int
+	SET @MaxCounter=(CASE WHEN @PartitionCount=0 THEN(select max(id) from @compress)ELSE @PartitionCount END)
+	WHILE @counter <= (@MaxCounter)
+	BEGIN
+		   SELECT  @sql = enableCommand
+		   FROM @compress
+		   WHERE id = @counter
+
+		   PRINT @sql
+		   IF @WillRun=1
+		   EXEC(@sql)
+
+		   SELECT  @counter += 1
+	END
+END
