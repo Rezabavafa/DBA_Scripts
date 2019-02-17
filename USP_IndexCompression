@@ -1,0 +1,54 @@
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<reza bavafa>
+-- Create date: <2019-02-17>
+-- Description:	<Check Compression Index and Rebulit Index That Does Not Compression>
+-- =============================================
+CREATE PROCEDURE Usp_MNG_IndexCompression
+	
+	@schemaName AS nvarchar(200),
+	@TableName AS nvarchar(200),
+	@WillRun AS Bit
+AS
+BEGIN
+	SET NOCOUNT ON;
+	DECLARE @compress table
+	(
+	   id int identity,
+	   enableCommand varchar(max),
+	   indexType tinyint default(0)
+	)
+	INSERT INTO @compress
+	SELECT DISTINCT 'ALTER INDEX ' + i.name + ' on [' + s.name + '].[' + o.name + '] REBUILD WITH (data_compression = page)',
+		   i.type
+	FROM sys.indexes i 
+	INNER JOIN sys.objects o on i.object_id = o.object_id
+	INNER JOIN sys.schemas s on o.schema_id = s.schema_id 
+	LEFT JOIN sys.partitions P ON P.object_id=o.object_id 
+	WHERE 
+			i.type > 0
+		and o.is_ms_shipped = 0
+		AND P.data_compression_desc='NONE'
+		AND o.name=@TableName
+		AND s.name = @schemaName
+	ORDER BY i.type
+
+	DECLARE @counter int = 1, @sql varchar(max)
+
+	WHILE @counter <= (select max(id) from @compress)
+	BEGIN
+		   SELECT  @sql = enableCommand
+		   FROM @compress
+		   WHERE id = @counter
+
+		   PRINT @sql
+		   IF @WillRun=1
+		   EXEC(@sql)
+
+		   SELECT  @counter += 1
+	END
+END
+GO
