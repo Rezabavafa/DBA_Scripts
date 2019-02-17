@@ -1,0 +1,76 @@
+USE [AYN_Deposit_ODS_Archive]
+GO
+/****** Object:  StoredProcedure [dbo].[4_Sp_AddRanges_YEARLY]    Script Date: 2/17/2019 3:37:52 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+create PROCEDURE [dbo].[4_Sp_AddRanges_YEARLY] @DBName varchar(100), @TableName varchar(500), @FGName varchar(500), @NoFiles INT, @FilePath varchar(500), @StartDate int ,@EndDate int, @FunctionName varchar(20), @SchemeName varchar(100)
+AS
+BEGIN
+	
+SET NOCOUNT ON;
+
+	DECLARE @time_Id INT;
+	DECLARE @Counter INT;
+  	DECLARE @Createfunction NVARCHAR(MAX);
+	DECLARE @values VARCHAR(MAX);
+
+	SET @values  = '';
+	SET @Counter = 1;
+
+	PRINT 'Start Date is:' + CAST(@StartDate AS VARCHAR(10))
+	PRINT 'End Date is:' + CAST(@EndDate AS VARCHAR(10))
+	PRINT CHAR(13);
+
+	DECLARE time_cursor CURSOR FOR  
+	SELECT DiSTINCT LEFT([ShamsiDate],4) FROM [dbo].[BNK_GNR_Dim_Date]
+	WHERE  [ShamsiDate] >=  @startDate AND [ShamsiDate] <=  @endDate 
+	--ORDER BY [ShamsiDate]
+
+	OPEN time_cursor;    
+	FETCH NEXT FROM time_cursor  
+	INTO @time_Id;  
+
+	WHILE @@FETCH_STATUS = 0 
+	BEGIN  
+
+	SET @Counter = 1;
+
+	DECLARE @Year INT;
+	SET @Year = (SELECT DISTINCT LEFT([ShamsiDate],4) FROM [dbo].[BNK_GNR_Dim_Date] WHERE  LEFT([ShamsiDate],4) = @time_id ) 
+	
+	DECLARE @My_SQL AS NVARCHAR(MAX)
+	SET @My_SQL =  'ALTER DATABASE ' + @DBName + ' ADD FILEGROUP ' + @FGName + '_' + CAST(@time_Id AS VARCHAR(10)) + CHAR(13);
+	--PRINT @My_SQL;
+	--EXEC sp_executesql @My_SQL;
+	
+	WHILE (@Counter <= @NoFiles)
+	BEGIN
+		SET @My_SQL = 'ALTER DATABASE ' + @DBName + ' ADD FILE (NAME = ''' + @DBName + '_' + @TableName + '_' + CAST(@time_Id AS VARCHAR(10)) + '_' + CAST(@Counter AS VARCHAR(10)) + ''', FILENAME = ''' + @FilePath + '\' + @FGName + '\' + @DBName + '_' + @TableName + '_' + CAST(@time_Id AS VARCHAR(10)) + '_' + CAST(@Counter AS VARCHAR(10)) + '.ndf'', SIZE = 32MB, FILEGROWTH = 256MB, MAXSIZE = 15360MB ) TO FILEGROUP ' + @FGName + '_' + CAST(@time_Id AS VARCHAR(10)) + CHAR(13);
+		SET @Counter = @Counter + 1;
+		--PRINT @My_SQL;
+		--EXEC sp_executesql @My_SQL;
+	END
+	
+	SET @My_SQL = 'ALTER PARTITION SCHEME ' + @SchemeName + ' NEXT USED ' + @FGName + '_' + CAST(@time_Id AS VARCHAR(10)) + CHAR(13); 
+	SET @My_SQL += 'ALTER PARTITION FUNCTION ' + @FunctionName + ' () SPLIT RANGE ( ' + CAST(@Year AS VARCHAR(10)) + ')' + CHAR(13);
+	
+	PRINT @My_SQL;
+	--EXEC sp_executesql @My_SQL;
+	
+	FETCH FROM time_cursor  
+	INTO @time_Id;
+	END
+
+	CLOSE time_cursor;  
+	DEALLOCATE time_cursor; 
+
+	--EXEC [dbo].[4_Sp_AddRanges_YEARLY] 'AYN_Loan_ODS_Archive','RPTFT031', 'FG_RPTFT031',1, 'F:\DB-Data\AYN_Loan_ODS_Archive',  13900101, 13941230, 'PF_RPTFT031', 'PS_RPTFT031'
+	
+END;
+
+
