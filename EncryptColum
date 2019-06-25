@@ -1,0 +1,34 @@
+ ----CReate Master Key
+--CREATE MASTER KEY ENCRYPTION BY   
+--PASSWORD = 'S0n!!@@Gh@553m1';   
+
+----Create Certificate
+--CREATE CERTIFICATE SON_Certificates  
+--   WITH SUBJECT = 'Son Pass Encription';  
+--GO  
+
+----CREATE SYMMETRIC KEY SonSKey  
+--    WITH ALGORITHM = AES_256  
+--    ENCRYPTION BY CERTIFICATE SON_Certificates;  
+--GO  
+
+---- Create a column in which to store the encrypted data.  
+--ALTER TABLE [dbo].[SonCoInfo]
+--    ADD Password varbinary(128);   
+--GO
+
+-- Open the symmetric key with which to encrypt the data.  
+--OPEN SYMMETRIC KEY SonSKey  
+--   DECRYPTION BY CERTIFICATE SON_Certificates;  
+--UPDATE SonCoInfo
+--SET PASSWORD= EncryptByKey(Key_GUID('SonSKey'), p);
+
+  
+-- Verify the encryption.  
+-- First, open the symmetric key with which to decrypt the data.  
+OPEN SYMMETRIC KEY SonSKey 
+DECRYPTION BY CERTIFICATE SON_Certificates; 
+SELECT *,CONVERT(varchar, DecryptByKey(Password)) AS 'DecryptedPassword' 
+FROM SonCoInfo;
+CLOSE SYMMETRIC KEY SonSKey; 
+ 
