@@ -1,0 +1,15 @@
+GO
+Declare 
+	@dynamic_sql varchar(max),
+	@salesorderid int
+SET @salesorderid=43660
+ 
+SET @dynamic_sql=' SELECT * FROM Sales.SalesOrderDetail where SalesOrderID=' 
+	+ CAST(@salesorderid AS VARCHAR(100))
+EXECUTE(@dynamic_sql)
+
+-------------Replace By
+
+ DECLARE @dynamic_sql NVARCHAR(100)
+SET @dynamic_sql = N'SELECT * FROM Sales.SalesOrderDetail where SalesOrderID=@salesorderid'
+EXECUTE sp_executesql @dynamic_sql, N'@salesorderid int', @salesorderid = 43661
